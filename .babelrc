@@ -1,0 +1,16 @@
+{
+    "presets": ["@babel/preset-env"],
+    "plugins": [
+      "@babel/plugin-proposal-class-properties",
+        ["module-resolver", {
+          "root": ["./src"],
+          "alias": {
+            "test": "./test",
+            "underscore": "lodash"
+          }
+        }],
+        ["import", { 
+          "libraryName": "@ant-design/react-native" 
+          }]
+      ]
+}
