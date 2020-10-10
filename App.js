@@ -141,15 +141,13 @@ class CameraView extends PureComponent {
   };
 
   switchCamera = () => {
-    var state = this.state;
-    if (state.type === RNCamera.Constants.Type.back){
-      console.log('switch from back to front');
-      state.type = RNCamera.Constants.Type.front;
-    } else {
-      console.log('switch from front to back');
-      state.type = RNCamera.Constants.Type.back;
-    }
-    this.setState(state);
+   if (this.state.type === RNCamera.Constants.Type.back){
+    console.log('switch from back to front');
+    this.setState({type: RNCamera.Constants.Type.front});
+  } else {
+    console.log('switch from front to back');
+    this.setState({type: RNCamera.Constants.Type.back});
+  }
   };
 
   takePicture = async () => {
