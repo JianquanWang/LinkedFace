@@ -57,7 +57,7 @@ class CameraView extends PureComponent {
     return (
       <View style={styles.container}>
 
-        {/* <ZoomView
+        <ZoomView
         onZoomProgress={progress => {
           this.setState({ zoom: progress });
         }}
@@ -67,7 +67,7 @@ class CameraView extends PureComponent {
         onZoomEnd={() => {
           console.log('zoom end');
         }}
-        > */}
+        >
 
         <RNCamera zoom={this.state.zoom} style={{ flex: 1 }} ref={ref => {
             this.camera = ref;
@@ -97,7 +97,7 @@ class CameraView extends PureComponent {
             <Text style={{fontSize: 14}}> Switch</Text>
           </TouchableOpacity>
         </View>
-        {/* </ZoomView> */}
+        </ZoomView>
       </View>
     );
   }
