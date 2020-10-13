@@ -6,13 +6,15 @@
  * @flow strict-local
  */
 
- 
+import 'react-native-gesture-handler';
+
 'use strict';
 import React, { PureComponent, Component } from 'react';
-import { AppRegistry, StyleSheet, Text, TouchableOpacity, View, PanResponder, Dimensions } from 'react-native';
+import { AppRegistry, StyleSheet, Text, TouchableOpacity, View, PanResponder, Dimensions, Image, Button} from 'react-native';
 import { RNCamera } from 'react-native-camera';
 import ImagePicker from 'react-native-image-picker';
-
+import {NavigationContainer, StackActions} from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
 
 /*
 ImagePicker.showImagePicker((response) => {
@@ -34,7 +36,20 @@ ImagePicker.showImagePicker((response) => {
 });
 */
 
+const Stack = createStackNavigator();
 
+class App extends Component {
+  render(){
+  return(
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="CameraView">
+        <Stack.Screen name="CameraView" component={CameraView} options={{title:'LinkedFace'}}/>
+        <Stack.Screen name="ImageDisplayScreen" component={ImageDisplayScreen} options={{title:'LinkedFace'}}/>
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
+}
 
 
 // Camera implement with react-native-camera
@@ -46,7 +61,7 @@ class CameraView extends PureComponent {
       flash: 'off',
       autoFocus: 'on',
       depth: 0,
-      type: RNCamera.Constants.Type.front,
+      type: RNCamera.Constants.Type.back,
       whiteBalance: 'auto',
       ratio: '16:9',
       source: '',
@@ -56,18 +71,17 @@ class CameraView extends PureComponent {
   render() {
     return (
       <View style={styles.container}>
-
-        {/* <ZoomView
-        onZoomProgress={progress => {
-          this.setState({ zoom: progress });
-        }}
-        onZoomStart={() => {
-          console.log('zoom start');
-        }}
-        onZoomEnd={() => {
-          console.log('zoom end');
-        }}
-        > */}
+         <ZoomView
+            onZoomProgress={progress => {
+              this.setState({ zoom: progress });
+            }}
+            onZoomStart={() => {
+              console.log('zoom start');
+            }}
+            onZoomEnd={() => {
+              console.log('zoom end');
+            }}
+          > 
 
         <RNCamera zoom={this.state.zoom} style={{ flex: 1 }} ref={ref => {
             this.camera = ref;
@@ -87,17 +101,17 @@ class CameraView extends PureComponent {
           }}
           />
           <View style={{ flex: 0, flexDirection: 'row', justifyContent: 'center', backgroundColor: 'transparent'}}>
-        <TouchableOpacity onPress={this.launchImageLibrary.bind(this)} style={styles.capture}>
-            <Text style={{fontSize: 14}}> Library </Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={this.takePicture.bind(this)} style={styles.capture}>
-            <Text style={{ fontSize: 14 }}> SNAP </Text>
-          </TouchableOpacity>
-          <TouchableOpacity onPress={this.switchCamera.bind(this)} style={styles.capture}>
-            <Text style={{fontSize: 14}}> Switch</Text>
-          </TouchableOpacity>
-        </View>
-        {/* </ZoomView> */}
+            <TouchableOpacity onPress={this.launchImageLibrary.bind(this)} style={styles.capture}>
+              <Text style={{fontSize: 14}}> Library </Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={this.takePicture.bind(this)} style={styles.capture}>
+              <Text style={{ fontSize: 14 }}> SNAP </Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={this.switchCamera.bind(this)} style={styles.capture}>
+              <Text style={{fontSize: 14}}> Switch</Text>
+            </TouchableOpacity>
+          </View>
+        </ZoomView>
       </View>
     );
   }
@@ -136,6 +150,7 @@ class CameraView extends PureComponent {
         const source = {uri: response.uri};
         // const source = {uri: 'data:image/jpeg;base64,' + response.data};
         this.setState({source: source});
+        //this.props.navigation.navigate('ImageDisplayScreen', {source: this.state.source});
       } 
     });
   };
@@ -154,34 +169,13 @@ class CameraView extends PureComponent {
     if (this.camera) {
       const options = { quality: 0.5, base64: true };
       const data = await this.camera.takePictureAsync(options);
+      //this.props.navigation.navigate('ImageDisplayScreen', {source: this.state.source});
       console.log(data.uri);
     }
   };
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    flexDirection: 'column',
-    backgroundColor: 'black',
-  },
-  preview: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    alignItems: 'center',
-    // on pc
-    transform: [{rotate:"-90deg"}],
-  },
-  capture: {
-    flex: 0,
-    backgroundColor: '#fff',
-    borderRadius: 5,
-    padding: 15,
-    paddingHorizontal: 20,
-    alignSelf: 'center',
-    margin: 20,
-  },
-});
+
 
 
 // ZoomView
@@ -209,8 +203,64 @@ class ZoomView extends Component {
       <View style={{ flex: 1, width: '100%' }} {...this._panResponder.panHandlers}>
         {this.props.children}
       </View>
+      
     );
   }
 }
 
-export default CameraView;
+class ImageDisplayScreen extends Component{
+  render(){
+    const {params} = this.props.navigation.state;
+    const source = params ? params.source : null; 
+    return (
+      <View style={styles.container}>
+          <Image source={{uri: JSON.stringify(source)}}
+                 style={{width:400, height:400}}/>
+
+          <View style={{ flex: 0, flexDirection: 'row', justifyContent: 'space-between', backgroundColor: 'transparent'}}>
+              <TouchableOpacity onPress={this.goBack.bind(this)} style={styles.capture}>
+                <Text style={{fontSize: 14}}> Cancel </Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={this.pick.bind(this)} style={styles.capture}>
+                <Text style={{fontSize: 14}}> Pick </Text>
+              </TouchableOpacity>
+          </View>
+      </View>
+    );
+}
+  goBack = () => {
+    console.log("Cancel image");
+    this.props.navigation.goBack();
+  };
+
+  pick = () => {
+    console.log("Pick this image");
+    // this.props.navigation.navigate('');
+  }
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    flexDirection: 'column',
+    backgroundColor: 'black',
+  },
+  preview: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    // on pc
+    transform: [{rotate:"-90deg"}],
+  },
+  capture: {
+    flex: 0,
+    backgroundColor: '#fff',
+    borderRadius: 5,
+    padding: 15,
+    paddingHorizontal: 20,
+    alignSelf: 'center',
+    margin: 20,
+  },
+});
+
+export default App;
