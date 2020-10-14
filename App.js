@@ -10,7 +10,7 @@ import 'react-native-gesture-handler';
 
 'use strict';
 import React, { PureComponent, Component } from 'react';
-import { AppRegistry, StyleSheet, Text, TouchableOpacity, View, PanResponder, Dimensions, Image, Button} from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, PanResponder, Dimensions, Image, CameraRoll} from 'react-native';
 import { RNCamera } from 'react-native-camera';
 import ImagePicker from 'react-native-image-picker';
 import {NavigationContainer, StackActions} from '@react-navigation/native';
@@ -66,7 +66,7 @@ class CameraView extends PureComponent {
       ratio: '16:9',
       source: '',
     };
-    this.launchCamera;
+    //this.launchCamera;
   }  
   render() {
     return (
@@ -115,7 +115,7 @@ class CameraView extends PureComponent {
       </View>
     );
   }
-
+  // not used
   launchCamera = () => {
   ImagePicker.launchCamera((response) => {
     console.log('Response = ', response);
@@ -150,7 +150,7 @@ class CameraView extends PureComponent {
         const source = {uri: response.uri};
         // const source = {uri: 'data:image/jpeg;base64,' + response.data};
         this.setState({source: source});
-        //this.props.navigation.navigate('ImageDisplayScreen', {source: this.state.source});
+        this.props.navigation.navigate('ImageDisplayScreen', {source: this.state.source});
       } 
     });
   };
@@ -167,9 +167,9 @@ class CameraView extends PureComponent {
 
   takePicture = async () => {
     if (this.camera) {
-      const options = { quality: 0.5, base64: true };
+      const options = { };
       const data = await this.camera.takePictureAsync(options);
-      //this.props.navigation.navigate('ImageDisplayScreen', {source: this.state.source});
+      this.props.navigation.navigate('ImageDisplayScreen', {source: data.uri});
       console.log(data.uri);
     }
   };
@@ -210,12 +210,15 @@ class ZoomView extends Component {
 
 class ImageDisplayScreen extends Component{
   render(){
-    const {params} = this.props.navigation.state;
+    const params = this.props.route.params;
     const source = params ? params.source : null; 
+    console.log(JSON.stringify(source));
     return (
       <View style={styles.container}>
           <Image source={{uri: JSON.stringify(source)}}
-                 style={{width:400, height:400}}/>
+                 style={{width:400, height:512}}
+                 onLoad={() => this.forceUpdate()}
+                 resizeMode='cover'/>
 
           <View style={{ flex: 0, flexDirection: 'row', justifyContent: 'space-between', backgroundColor: 'transparent'}}>
               <TouchableOpacity onPress={this.goBack.bind(this)} style={styles.capture}>
@@ -243,7 +246,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: 'column',
-    backgroundColor: 'black',
+    backgroundColor: 'white',
   },
   preview: {
     flex: 1,
