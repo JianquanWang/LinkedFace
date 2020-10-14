@@ -15,6 +15,7 @@ import { RNCamera } from 'react-native-camera';
 import ImagePicker from 'react-native-image-picker';
 import {NavigationContainer, StackActions} from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
+import CameraRoll from "@react-native-community/cameraroll";
 
 /*
 ImagePicker.showImagePicker((response) => {
@@ -169,8 +170,10 @@ class CameraView extends PureComponent {
     if (this.camera) {
       const options = { };
       const data = await this.camera.takePictureAsync(options);
-      this.props.navigation.navigate('ImageDisplayScreen', {source: data.uri});
       console.log(data.uri);
+      CameraRoll.saveToCameraRoll(data.uri, "photo");
+      this.props.navigation.navigate('ImageDisplayScreen', {source: data.uri});
+      
     }
   };
 }
