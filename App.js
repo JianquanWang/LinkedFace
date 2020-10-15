@@ -10,7 +10,7 @@ import 'react-native-gesture-handler';
 
 'use strict';
 import React, { PureComponent, Component } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View, PanResponder, Dimensions, Image, CameraRoll} from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View, PanResponder, Dimensions, Image, Platform, PermissionsAndroid} from 'react-native';
 import { RNCamera } from 'react-native-camera';
 import ImagePicker from 'react-native-image-picker';
 import {NavigationContainer, StackActions} from '@react-navigation/native';
@@ -51,7 +51,22 @@ class App extends Component {
   );
 }
 }
+async function hasAndroidPermission() {
+  const permission = PermissionsAndroid.PERMISSIONS.WRITE_EXTERNAL_STORAGE;
 
+  const hasPermission = await PermissionsAndroid.check(permission);
+  if (hasPermission) {
+    return true;
+  }
+
+  const status = await PermissionsAndroid.request(permission, {
+    title: "My App Storage Permission",
+    message: 'My App needs access to your storage ' +
+    'so you can save your photos',
+    },
+  );
+  return status === 'granted';
+}
 
 // Camera implement with react-native-camera
 class CameraView extends PureComponent {
@@ -137,9 +152,17 @@ class CameraView extends PureComponent {
   });
   };
 
+  
   launchImageLibrary = () => {
-    ImagePicker.launchImageLibrary((response) => {
-      console.log('Response = ', response);
+    const options = {
+      title: 'Select image',
+      storageOptions: {
+        skipBackup: true,
+        path: 'images',
+      },
+    };
+    ImagePicker.launchImageLibrary(options, (response) => {
+      // console.log('Response = ', response);
     
       if(response.didCancel){
         console.log('User cancelled image picker');
@@ -152,6 +175,7 @@ class CameraView extends PureComponent {
         // const source = {uri: 'data:image/jpeg;base64,' + response.data};
         this.setState({source: source});
         this.props.navigation.navigate('ImageDisplayScreen', {source: this.state.source});
+        console.log('launchImageLibrary', this.state.source);
       } 
     });
   };
@@ -171,8 +195,13 @@ class CameraView extends PureComponent {
       const options = { };
       const data = await this.camera.takePictureAsync(options);
       console.log(data.uri);
-      CameraRoll.saveToCameraRoll(data.uri, "photo");
-      this.props.navigation.navigate('ImageDisplayScreen', {source: data.uri});
+      if(Platform.OS === 'android' && !(await hasAndroidPermission())) {
+        return;
+      }
+      CameraRoll.save(data.uri, 'photo');
+      const source = {uri: data.uri}
+      this.setState({source: source});
+      this.props.navigation.navigate('ImageDisplayScreen', {source: this.state.source});
       
     }
   };
@@ -215,13 +244,13 @@ class ImageDisplayScreen extends Component{
   render(){
     const params = this.props.route.params;
     const source = params ? params.source : null; 
-    console.log(JSON.stringify(source));
+    console.log('ImageDisplayScreen', JSON.stringify(source));
     return (
       <View style={styles.container}>
-          <Image source={{uri: JSON.stringify(source)}}
-                 style={{width:400, height:512}}
+          <Image source={source}
+                 style={{width:400, height:400, alignSelf: 'center'}}
                  onLoad={() => this.forceUpdate()}
-                 resizeMode='cover'/>
+                 resizeMode='stretch'/>
 
           <View style={{ flex: 0, flexDirection: 'row', justifyContent: 'space-between', backgroundColor: 'transparent'}}>
               <TouchableOpacity onPress={this.goBack.bind(this)} style={styles.capture}>
