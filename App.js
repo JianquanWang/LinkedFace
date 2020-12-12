@@ -270,8 +270,55 @@ class ImageDisplayScreen extends Component{
 
   pick = () => {
     console.log("Pick this image");
+    let params = {
+      userId:'abc12345',
+      path: source
+    }
+    uploadImage('face/detect.do', params)
+    .then(res=>{
+      if(res.header.statusCode == 'success'){
+        result = res.body.result;
+      }else{
+        console.log(res.header.msgArray[0].desc);
+      }
+    }).catch(err={})
     // this.props.navigation.navigate('');
   }
+}
+
+
+/*
+Fetch photo to server
+*/
+let common_url = "http://localhost:8080/";  // server address
+let token = '';   // user token
+
+function uploadImage(url, params){
+  return new Promise(function (resolve, reject){
+    let formData = new FormData();
+    for(var key in params){
+      formData.append(key, params[key]);
+    }
+    
+    let file = {uri: params.path, type: 'application/octet-stream', name:'image.jpg'};
+    formData.append("file", file);
+    fetch(common_url +url,{
+      method: 'POST',
+      headers: {
+        'Content-Type': 'multipart/form-data;charset=utf-8',
+        'x-access-token':token,
+      },
+      body: formData,
+    }).then((response)=>response.json())
+    .then((responseData)=>{
+      console.log('uploadImage', responseData);
+      resolve(responseData);
+    })
+    .catch((err)=>{
+      console.log('err', err);
+      reject(err);
+    });
+  });
 }
 
 const styles = StyleSheet.create({
