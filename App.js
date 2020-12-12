@@ -270,9 +270,10 @@ class ImageDisplayScreen extends Component{
 
   pick = () => {
     console.log("Pick this image");
+    CameraRoll.save(this.source.uri, 'photo');
     let params = {
       userId:'abc12345',
-      path: source
+      path: source.uri
     }
     uploadImage('face/detect.do', params)
     .then(res=>{
