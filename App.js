@@ -13,9 +13,11 @@ import React, { PureComponent, Component } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View, PanResponder, Dimensions, Image, Platform, PermissionsAndroid} from 'react-native';
 import { RNCamera } from 'react-native-camera';
 import ImagePicker from 'react-native-image-picker';
-import {NavigationContainer, StackActions} from '@react-navigation/native';
+import {Link, NavigationContainer, StackActions} from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import CameraRoll from "@react-native-community/cameraroll";
+import { FlatList, ScrollView } from 'react-native-gesture-handler';
+import {Linking} from "react-native";
 
 /*
 ImagePicker.showImagePicker((response) => {
@@ -46,6 +48,7 @@ class App extends Component {
       <Stack.Navigator initialRouteName="CameraView">
         <Stack.Screen name="CameraView" component={CameraView} options={{title:'LinkedFace'}}/>
         <Stack.Screen name="ImageDisplayScreen" component={ImageDisplayScreen} options={{title:'LinkedFace'}}/>
+        <Stack.Screen name="ResultDisplayScreen" component={ResultDisplayScreen} options={{title:'LinkedFace'}}/>
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -270,40 +273,44 @@ class ImageDisplayScreen extends Component{
 
   pick = () => {
     console.log("Pick this image");
-    CameraRoll.save(this.source.uri, 'photo');
+    console.log(JSON.stringify
+      (this.props.route.params.source.uri));
+    CameraRoll.save(this.props.route.params.source.uri, 'photo');
     let params = {
-      userId:'abc12345',
-      path: source.uri
+      userId:'abc12345', // unused
+      path: this.props.route.params.source.uri
     }
-    uploadImage('face/detect.do', params)
+    this.uploadImage('face/detect.do', params)
     .then(res=>{
       if(res.header.statusCode == 'success'){
         result = res.body.result;
       }else{
         console.log(res.header.msgArray[0].desc);
       }
-    }).catch(err={})
+    }).catch(err=>{});
     // this.props.navigation.navigate('');
   }
-}
 
 
-/*
-Fetch photo to server
-*/
-let common_url = "http://localhost:8080/";  // server address
-let token = '';   // user token
+  /*
+  Fetch photo to server
+  */
+  
 
-function uploadImage(url, params){
-  return new Promise(function (resolve, reject){
+  uploadImage=(url, params)=>{
+    let navigate = this.props.navigation.navigate;
+    return new Promise(function (resolve, reject){
+    let common_url = "http://192.168.140.1:8080/linkedface/";  // server address
+    let token = '';   // user token
     let formData = new FormData();
+   
     for(var key in params){
       formData.append(key, params[key]);
     }
-    
+    console.log("params.path", params.path);
     let file = {uri: params.path, type: 'application/octet-stream', name:'image.jpg'};
     formData.append("file", file);
-    fetch(common_url +url,{
+    fetch(common_url + url,{
       method: 'POST',
       headers: {
         'Content-Type': 'multipart/form-data;charset=utf-8',
@@ -312,6 +319,9 @@ function uploadImage(url, params){
       body: formData,
     }).then((response)=>response.json())
     .then((responseData)=>{
+      // get response data and display on screen
+      console.log("navigation to resultDisplayScreen");
+      navigate('ResultDisplayScreen',{responseData: responseData});
       console.log('uploadImage', responseData);
       resolve(responseData);
     })
@@ -320,6 +330,66 @@ function uploadImage(url, params){
       reject(err);
     });
   });
+  }
+  
+}
+
+
+
+
+/*
+Result display page
+*/
+class ResultDisplayScreen extends Component {
+  render(){
+    const params = this.props.route.params;
+    const response = params.responseData;
+    console.log('ResultDisplayScreen');
+    //console.log(responseData);
+    // var resposne = JSON.parse(responseData);
+    // var list = () => {
+    //   var res = [];
+    //   // console.log(response.length);
+    //   for(var i = 0; i < response.length; i++){
+        
+    //     var name = response[i].name;
+    //     var similarity = response[i].similarity;
+    //     var linkedinUri = response[i].linkedinUri;
+    //   res.push(<div><a href={linkedinUri}>{name}: {similarity}</a></div>)
+    //   }
+    //   return res;
+    // }
+    // console.log(list());
+    const classes =this.props;
+    return(
+      <ScrollView>
+          <Text>name: similarity</Text>
+          {response.map((item, idx)=>
+             <Text key={idx} onPress={()=>Linking.openURL(item.linkedinUri)}> {item.name}: {item.similarity} </Text>
+          )
+          }
+        
+      </ScrollView>
+    );
+  }
+}
+
+function NullResult(props){
+  return <h2>Matching Failed, please try it again</h2>;
+}
+function AnyResult(props){
+  return (
+    <View>
+    {props.list}
+    </View>);
+}
+function FaceResult(props){
+  const resultList = props.list;
+  if (resultList.length > 0 ){
+    return <AnyResult list={resultList}/>;
+  }else {
+    return <NullResult/>; 
+  }
 }
 
 const styles = StyleSheet.create({
