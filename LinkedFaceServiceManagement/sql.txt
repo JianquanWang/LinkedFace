@@ -1,0 +1,24 @@
+drop database if exists linkedface;
+
+create database linkedface;
+
+use linkedface;
+
+create table person(
+	id int primary key auto_increment,
+	name varchar(30) not null,
+	linkedin_uri varchar(300) not null,
+	photo_path varchar(300) not null,
+	organization varchar(300)
+);
+
+create table user(
+	id int primary key auto_increment,
+	username varchar(30) not null,
+	password varchar(30) not null
+);
+
+insert into user (username, password) values (
+	'admin',
+	'admin'
+);
